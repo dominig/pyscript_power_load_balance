@@ -1,0 +1,103 @@
+- id: '1677275427264'
+  alias: 'Power Saving: Activate: Deactivate'
+  description: Disconnect heating on high power request
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.meter_general_active_power
+    above: 3800
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    id: Low on
+  - platform: numeric_state
+    entity_id: sensor.meter_general_active_power
+    for:
+      hours: 0
+      minutes: 3
+      seconds: 0
+    below: 3800
+    id: Low off
+  - platform: numeric_state
+    entity_id: sensor.meter_general_active_power
+    above: 4000
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    id: Mid on
+  - platform: numeric_state
+    entity_id: sensor.meter_general_active_power
+    for:
+      hours: 0
+      minutes: 3
+      seconds: 0
+    below: 4000
+    id: Mid off
+  - platform: numeric_state
+    entity_id: sensor.meter_general_active_power
+    above: 4400
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    id: High on
+  - platform: numeric_state
+    entity_id: sensor.meter_general_active_power
+    for:
+      hours: 0
+      minutes: 3
+      seconds: 0
+    below: 4400
+    id: High off
+  - platform: numeric_state
+    entity_id: sensor.meter_general_active_power
+    above: 4600
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    id: Max on
+  - platform: numeric_state
+    entity_id: sensor.meter_general_active_power
+    for:
+      hours: 0
+      minutes: 3
+      seconds: 0
+    below: 4600
+    id: Max off
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: Low on
+      - condition: trigger
+        id: Mid on
+      - condition: trigger
+        id: High on
+      - condition: trigger
+        id: Max on
+      sequence:
+      - service: input_number.increment
+        data: {}
+      - service: water_heater.set_away_mode
+        data:
+          away_mode: false
+        target:
+          device_id: f221e33f66fed4daeb733e028ee29dac
+    - conditions:
+      - condition: trigger
+        id: Low off
+      - condition: trigger
+        id: Mid off
+      - condition: trigger
+        id: High off
+      - condition: trigger
+        id: Max off
+      sequence:
+      - service: input_number.decrement
+        data: {}
+        target:
+          entity_id: input_number.powsersavingmode
+  mode: queued

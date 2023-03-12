@@ -1,0 +1,127 @@
+  - platform: smart_thermostat
+    name: Smart Thermostat Bedroom
+    unique_id: smart_thermostat_bedroom
+    heater: input_boolean.virtual_heat_bedroom
+    target_sensor: sensor.temperature_bedroom_temperature_2
+    outdoor_sensor: sensor.larmor_plage_temperature
+    min_temp: 7
+    max_temp: 25
+    ac_mode: False
+    target_temp: 19
+    away_temp: 5
+    eco_temp: 17
+    comfort_temp: 19
+    target_temp_step: 0.1
+    keep_alive: 00:05:00
+    kp: 5.5
+    ki: 0.0005
+    kd: 300
+    ke: 5
+    pwm: 00:05:00
+    min_cycle_duration: 00:01:00
+  - platform: smart_thermostat
+    name: Smart Thermostat Kitchen-Bar
+    unique_id: smart_thermostat_kitchen_bar
+    heater: input_boolean.virtual_heat_kitchen
+    target_sensor: sensor.temperature_kitchen_temperature
+    outdoor_sensor: sensor.larmor_plage_temperature
+    min_temp: 7
+    max_temp: 25
+    ac_mode: False
+    target_temp: 18
+    away_temp: 5
+    eco_temp: 17
+    comfort_temp: 18
+    target_temp_step: 0.1
+    keep_alive: 00:05:00
+    kp: 5.5
+    ki: 0.0005
+    kd: 300
+    ke: 5
+    pwm: 00:05:00
+    min_cycle_duration: 00:01:00
+  - platform: smart_thermostat
+    name: Smart Thermostat Lounge
+    unique_id: smart_thermostat_lounge
+    heater: light.heating_lounge_group
+    target_sensor: sensor.temperature_lounge_temperature
+    outdoor_sensor: sensor.larmor_plage_temperature
+    min_temp: 7
+    max_temp: 25
+    ac_mode: False
+    target_temp: 19
+    away_temp: 5
+    eco_temp: 17
+    comfort_temp: 19
+    target_temp_step: 0.1
+    keep_alive: 00:05:00
+    kp: 5.5
+    ki: 0.0005
+    kd: 300
+    ke: 5
+    pwm: 00:05:00
+    min_cycle_duration: 00:01:00
+  - platform: smart_thermostat
+    name: Smart Thermostat TV
+    unique_id: smart_thermostat_tv
+    heater: input_boolean.virtual_heat_tv
+    target_sensor: sensor.temperature_tv_temperature
+    outdoor_sensor: sensor.larmor_plage_temperature
+    min_temp: 7
+    max_temp: 25
+    ac_mode: False
+    target_temp: 19
+    away_temp: 5
+    eco_temp: 17
+    comfort_temp: 19
+    boost_temp: 20
+    target_temp_step: 0.1
+    keep_alive: 00:05:00
+    kp: 5.5
+    ki: 0.0005
+    kd: 300
+    ke: 5
+    pwm: 00:05:00
+    min_cycle_duration: 00:01:00
+  - platform: smart_thermostat
+    name: Smart Thermostat Office
+    unique_id: smart_thermostat_office
+    heater: input_boolean.virtual_heat_office
+    target_sensor: sensor.temperature_office_temperature
+    outdoor_sensor: sensor.larmor_plage_temperature
+    min_temp: 7
+    max_temp: 25
+    ac_mode: False
+    target_temp: 19
+    away_temp: 5
+    eco_temp: 17
+    comfort_temp: 19
+    target_temp_step: 0.1
+    keep_alive: 00:05:00
+    kp: 5.5
+    ki: 0.0005
+    kd: 300
+    ke: 5
+    pwm: 00:05:00
+    min_cycle_duration: 00:01:00
+  - platform: smart_thermostat
+    name: Smart Thermostat Bathroom
+    unique_id: smart_thermostat_bathroom
+    heater: input_boolean.virtual_heat_bathroom
+    target_sensor: sensor.temperature_bathroom_temperature
+    outdoor_sensor: sensor.larmor_plage_temperature
+    min_temp: 7
+    max_temp: 35
+    ac_mode: False
+    target_temp: 19
+    boost_temp: 28
+    away_temp: 5
+    eco_temp: 16
+    target_temp_step: 0.1
+    keep_alive: 00:05:00
+    kp: 5.5
+    ki: 0.0005
+    kd: 300
+    ke: 5
+    pwm: 00:05:00
+    min_cycle_duration: 00:01:00
