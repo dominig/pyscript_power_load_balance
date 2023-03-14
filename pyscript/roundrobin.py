@@ -77,9 +77,11 @@ def away_status():
     return (AWAY_STATUS)
 
 # Step Round Robin every xx in cron format
+#   e.g. every other minute      -> TIME_STEP = 'cron(*/2 * * * *)'
+#        every 5 seconds (debug) -> TIME_STEP = 'cron(* * * * */5)'
 #   Note: if your radiator control is done via electromagnetic relays
 #         don't switch them to often to limit rapid wear (and noise)
-TIME_STEP = 'cron(* * * * * 0)'
+TIME_STEP = 'cron(*/2 * * * *)'
 
 #
 # Radiator list by name
@@ -145,7 +147,7 @@ state.set(
 # !WARNING: state_trigger requires all input on the same line which then can be very long
 @state_trigger("switch.virtual_virtual_radiator_lounge, switch.virtual_virtual_radiator_bedroom, switch.virtual_virtual_radiator_office, switch.virtual_virtual_radiator_tv, switch.virtual_virtual_radiator_kitchen, switch.virtual_virtual_radiator_bathroom")
 # Wait (in s) to allow thermostat to switch all required virtual switches
-@time_active(hold_off=3)
+@time_active(hold_off=1)
 # Do not allow multiple run in parallel -> force a unique completion
 def request_heater_change_mode(var_name, value):
     task.unique("request_heater_change_mode", kill_me=True)
@@ -174,8 +176,7 @@ def Round_Robin_Boost_mode(radiator=None, state=None):
         else:
            radiator_boost_mode[RADIATOR_LIST.index(radiator)] = 0 
         roundrobin_step()
-
-# end of initialisation. Further code is only called via configured triggers
+# Checking service availability for listed control device
 log.debug(f"roundrobin.py: end roundrobin.py intialisation done. Now waiting for tiggers")
 # -----------------------------------------
 
@@ -203,7 +204,6 @@ def roundrobin_step():
     round_robin_index = int(pyscript.radiator_status.round_robin_index)
     heater_activation_count=0
     # starting with a clean list (all off) saving previous value
-    radiator_live_mode_old=radiator_live_mode.copy()
     for i in range(len(RADIATOR_LIST)):
         radiator_live_mode[i]=0
     # when house is empty, all heating remain forced to off
@@ -231,14 +231,17 @@ def roundrobin_step():
         # we avoid redoing unrequired action on control relays and do nothin in test mode
         log.debug(f"roundrobin.py: about Switching actual radiator {RADIATOR_LIST[i]} index {i} actual mode {RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]]}")
         if radiator_live_mode[i] != RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]] and not TEST_MODE:
-            # let time for relay to settle (in second) before changing the next one.
-            task.sleep(1)
+            # may need to let time for relay to settle (in second) before changing the next one.
+            # task.sleep(1)
             if radiator_live_mode[i] == 0:
                 log.debug(f"roundrobin.py: Switching actual radiator {RADIATOR_LIST[i]} index {i} 'off'")
-                state.set(RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]], value='off')
+                # service call seems more stable than state.set (may depend on target hardware use one or the other)
+                #state.set(RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]], value='off')
+                service.call('light','turn_off',blocking=True, limit=1,entity_id=RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]])
             if radiator_live_mode[i] == 1 :
                 log.debug(f"roundrobin.py: Switching actual radiator {RADIATOR_LIST[i]} index {i} 'on'")
-                state.set(RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]], value='on')
+                #state.set(RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]], value='on')
+                service.call('light','turn_on',blocking=True, limit=1,entity_id=RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]])
         
      # save new state for reuse(roundrobin_index)/info/tracking/debug
     log.info(f"roundrobin.py: End roundrobin stepping radiator_requested_mode = {radiator_requested_mode}")

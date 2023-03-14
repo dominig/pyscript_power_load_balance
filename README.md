@@ -17,7 +17,7 @@ The calculation of available power assement automation is not part of the script
 
 The PowerSavingMode is monitored and any change will trigger a reduction or increase of usable ressources.\
 My loads (radiators) are all of identical value.\
-**It's important to realise that regular switching on/off will be done on each ressource while you play with high power.** 
+**It's important to realise that regular switching on/off will be done on each ressource while you play with high power.**
 
 ## ---------- DESCRIPTION ----------------
 ### It monitors \
@@ -52,10 +52,55 @@ The order RADIATOR_VIRTUAL_SWITCH_INV_DICT and RADIATOR_ACTUAL_SWITCH_DICT is no
 
 Most of electric radiator have an embedded thermostat. That later is often not very accurate due to it position (too close of the heat source). You need to remember that even if you force a radiator in 'confort mode', it will run under it's own logic and you cannot control when it will actually draw power. Trick is to put the limit high enough to let HA control the over all system while reasonable to avoid over heat in some room.
 
+## ----- Behaviour -----------
+As home hardware is not a reliable and as quick as industrial products, you need to add some delays.\
+Some are commented out waiting to be activated.
+
+### Power saving mode change
+The trigger is (and must be) instant but real corrective actions may still take a bit of time.\
+Must be triggered early enough and executed fast enough to avoid a general trip blackout.
+
+### Radiator Trigger
+A single virtual radiator trigger change will happen almost instantaneously.\
+Multiple change request will only pickup one trigger, the other ones will be executed at the next roundrobin step (a few minutes?)\
+While this is no issue with a real heating use case, it can be looking strange when debugging.\
+Running multiple triggers in parallel can crash your hardware (at least it does with mine). Hence the **task.unique** command in the code.
+
+### Away mode
+It will only be activated or deactivated at the next round robin step. May take some time (a few minutes?).
+
+### Boost mode
+Boost mode will force a radiator 'on' what ever says the controling thermostat.\
+Like away mode, it is activated at the next round robin step.\
+I use it for my towel dryer in my bathroom.\
+Boost mode is still affected by round robin stepping, power saving mode and away mode and the local thermostat on the radiator itself.\
+There is no time out on boost mode. **Your duty to take care of switching it off**.
+
+### Real hardware control issue
+I had statibility issues with the use of **state.set** to control my relays. Relays would set for about 40s and then unset. 
+Most likely it's a fault in my relay firmware, so I changed my code and used **service.call**\
+The 2 old calls are still commented out in the script source code would you need it.\
+I use as little time delay that I can. It's a compromise to find between your hardware performance\
+and the need to reduce power quickly enough to avoid a blackout when power saving mode changes.
+
+## Power Saving Mode management
+This is not covered by the script. An example based on a unique general meeter is given in the config directory.\
+It's not the best method and as soon as I will get more meeters, I will change it.\
+It can work (and does in my home) but power allocated to the heating system is always limited.\
+The issue is that, when you heat, you consume energy, and that is normal.\
+If you need to heat with all radiators on, you do not want to reduce power if that is not required.\
+The really useful info to measure, is the consummed energy outside of your heating system.\
+Your power saving mode must be driven by what remains available for the heating in Watts.\
+heating_available_w = max_available_w - other_use_w\
+Depending of electric provider trip you may have 1 may be 2 seconds to react before blacking out.\
+As most radiator still have an internal thermostat, your measurements might be different than your calculations.\
+You still need to assume the worse case, our a blackout will most likely happen soon.\
+**Note:** Do not fully trust announced power on radiator. Take it as an indication.Often they can take up to 15 to 20% more than indicated. This particularly true in Europe where voltage is assummed to be 220V but is often closer to 240V.
+Nothin is better than a measurement with a Clamp-on Amp Meeter.
+
 
 ## ---------- CONFIGURATION ---------------
-Configuration is specific to each house and MUST be aligned with reality\
-#
+Configuration is specific to each house and MUST be aligned with reality
 All CONSTANT must be declared in respect of Python3 syntax.\
              Errors will only be reported in home-assistant.log\
 #
@@ -78,4 +123,10 @@ Simply copy the file roundrobin.py in the directory config/pyscript\
 First time required HA restart.\
 Later modification are activated automatically when file is saved or touched.\
 Debug in via the logger.\
-Typo and indentiation errors when provisioning configuration are easily done.\
+Typo and indentiation errors when provisioning configuration are easily done.
+
+You will need to create virtual switches.\
+I used HACS.Virtual switches but HA group Toogle also works.
+
+Enjoy\
+Dominig
