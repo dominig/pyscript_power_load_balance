@@ -139,6 +139,7 @@ state.set(
             'away_status': '',
             'power_saving_mode': 0,
             'round_robin_index': 0,
+            'active_radiators_number' :0,
             'radiator_requested_mode': radiator_live_mode,
             'radiator_boost_mode': radiator_live_mode,
             'radiator_live_mode': radiator_live_mode
@@ -252,7 +253,12 @@ def roundrobin_step():
     log.info(f"roundrobin.py:                         away_status      ={away_status()}")
     if TEST_MODE:
         log.info(f"roundrobin.py:                         WARNING TEST_MODE active NO actual radiator control")
-
+    # count number of active radiator for reporting
+    # a valuable helper for an external power_saving_mode estimation
+    active_radiators_number=0
+    for i in range(len(RADIATOR_LIST)):
+        if radiator_live_mode[i] == 1:
+            active_radiators_number+=1
     state.set(
             'pyscript.radiator_status',
             value='none',
@@ -261,6 +267,7 @@ def roundrobin_step():
                 'away_status': away_status(),
                 'power_saving_mode': power_saving_mode,
                 'round_robin_index': round_robin_index,
+                'active_radiators_number': active_radiators_number,
                 'radiator_requested_mode': radiator_requested_mode,
                 'radiator_boost_mode': radiator_boost_mode,
                 'radiator_live_mode': radiator_live_mode

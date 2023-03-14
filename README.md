@@ -90,13 +90,27 @@ It can work (and does in my home) but power allocated to the heating system is a
 The issue is that, when you heat, you consume energy, and that is normal.\
 If you need to heat with all radiators on, you do not want to reduce power if that is not required.\
 The really useful info to measure, is the consummed energy outside of your heating system.\
-Your power saving mode must be driven by what remains available for the heating in Watts.\
-heating_available_w = max_available_w - other_use_w\
+Your power saving mode must be driven by what remains available for the heating in Watts or better Amps.\
+The trip will cut with an Amp value, not Watts. The later varies a little with voltage changes during the day.\
+If you have can only use Watts meetering, take a 10% safety margin in your estimation.
+Different methods can be used to estimate the available power, depending how many meeters you have and where they are:
+  - heating_available_A = max_available_A - other_use_A\
+    most accurate method as independant from embedded radiator thermostats side effet
+  - heating_available_A =max_available_A - (global_meter_A+heating_use_w*thermostat_factor)\
+    result varies depending of embedded thermostat behaviour, hence a thermostat (start with 2 or 3)
+  - heating_available_A = max_available_A - global_meter_A + radiator_power_A*active_radiators_number/thermostat_factor\
+    active_radiators_number is reported by roundrobin.py in the state variable pyscript.radiator_status as an attribute.\
 Depending of electric provider trip you may have 1 may be 2 seconds to react before blacking out.\
-As most radiator still have an internal thermostat, your measurements might be different than your calculations.\
-You still need to assume the worse case, our a blackout will most likely happen soon.\
-**Note:** Do not fully trust announced power on radiator. Take it as an indication.Often they can take up to 15 to 20% more than indicated. This particularly true in Europe where voltage is assummed to be 220V but is often closer to 240V.
+As most radiator still have an internal thermostat, your measurements might be different than your calculations. Hence a thermostat_factor.\
+You still need to assume the worse case, or a blackout will most likely happen rather soon than later.\
+**Note:** Do not fully trust announced power on radiator documentation. Take it as an indication. Often they can take up to 15 to 20% more than indicated. This is particularly true in Europe where the voltage is assummed to be 220V but is often closer to 240V.
 Nothin is better than a measurement with a Clamp-on Amp Meeter.
+
+## Single phase and 3phases wiring support
+My script has been written for a single phase installation.\
+In a multiphases installation, you would need to run 3 independant scripts. One per phase\
+Just copy, change the file name, configure one script per phase.\
+**Don't forget** to give a different name to the reporting state variable pyscript.radiator_status (one name per script).
 
 
 ## ---------- CONFIGURATION ---------------
