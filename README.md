@@ -1,5 +1,5 @@
 # pyscript_power_load_balance
-This is a python script for Home Automation enabling a power dispatch via power balancing\
+This is a set of two python scripts for Home Automation enabling a power dispatch via power balancing\
 The simple idea is to activate and deactivate radiators automatically\
 Keeping the heating in all the house but not all at the time.\
 The number of activate radiators is defined dynamicaly.
@@ -8,19 +8,22 @@ Configuration is simple but done directly in the code. There is NO UI.\
 You will need to install pyscript before using it\
   https://hacs-pyscript.readthedocs.io/en/latest/reference.html#state-variable-functions
 
-The base principle is that a PowerSavingMode number is set via an automation\
+The base principle of the load balancing is that a PowerSavingMode number is set via an automation\
 You can use any input number as a target. My example uses the house actual consumed power in Watts and a numeric helper\
 You would be better at reading the power used by other equipement than the total value. \
 What you really need to estimate is the remaining energy available for your heating system.\
 I designed it for controling my heating but you could use as well starting and stopping of heavy equipements or time of the day.\
-The calculation of available power assement automation is not part of the script but I provide my use case as an example.
+The calculation of available power assement automation is not part of the round robin script but I provide a simple automation use case as an example in the config directory.
+
+The script powersavemode.py implement a more sofisticated management of the power saving status.\
+It uses of few information reported by roundrobin.py to simplify the configuration. \
 
 The PowerSavingMode is monitored and any change will trigger a reduction or increase of usable ressources.\
 My loads (radiators) are all of identical value.\
 **It's important to realise that regular switching on/off will be done on each ressource while you play with high power.**
 
-## ---------- DESCRIPTION ----------------
-### It monitors \
+# ---------- DESCRIPTION  roundrobin.py----------------
+### It monitors
    - a list of virtual toggle switches (see HA Toogle helpers or HACS.virtual swiches)\
      defined in the list RADIATOR_VIRTUAL_SWITCH_INV_DICT\
        **AND REPEATED** in the @triggger decorator
@@ -110,13 +113,34 @@ In a multiphases installation, you would need to run 3 independant scripts. One 
 Just copy, change the file name, configure one script per phase.\
 **Don't forget** to give a different name to the reporting state variable pyscript.radiator_status (one name per script).
 
+# ---------- DESCRIPTION powersavemode.py ----------------
 
-## ---------- CONFIGURATION ---------------
-Configuration is specific to each house and MUST be aligned with reality
+ This program estimates the remaining available power to be used by the heating system.
+ 
+ It monitors
+    - The various meeter available in the house\
+      GENERAL_METER  define the unique overall installation meeter\
+      EXTRA_METERS   list the meeter attached to large non heater item\
+ It controls a power_saving_mode\
+    The power_saving_mode is a HA numeric variable that is monitored as entry\
+    by load power balancing script roundrobin.py  \
+ Caculation can be done with Ampere (A) or Watts (W) or kW\
+ You just need to be consistant and always used the same unit.\
+
+# -------------- LICENSE ---------------
+Apache V2   http://www.apache.org/licenses/
+
+# ------------- CONSTRAINT -------------
+ Trip are fast and your code must react faster than the trip\
+ You rarelay have more than 1 or 2 seconds to correct power use before backout.\
+ Meters reporting value less than once a second for such use case are useless.\
+
+# ---------- CONFIGURATION ---------------
+Configuration is specific to each house and MUST be aligned with reality\
 All CONSTANT must be declared in respect of Python3 syntax.\
              Errors will only be reported in home-assistant.log\
 #
-## Detailled configuration description is in the script code
+## Detailled configuration description is in each script code
 If a Thermostat need to control multiple radiator you just need to list the \
 virtual switch pointed by the thermotat and monitored by roundrobin.py script several time
 using one entry for each output controlled switch.\
@@ -131,11 +155,12 @@ In HA: You will need to create \
 ## Installation
 You need to install pyscript.\
 I use HACS.virtual but default HA helpers can also provide the virtual switches\
-Simply copy the file roundrobin.py in the directory config/pyscript\
-First time required HA restart.\
+Simply copy the file roundrobin.py and/or powersavemode.py in the directory config/pyscript\
+First time requires HA cold restart.\
 Later modification are activated automatically when file is saved or touched.\
 Debug in via the logger.\
-Typo and indentiation errors when provisioning configuration are easily done.
+Typo and indentiation errors when provisioning configuration are easily done.\
+config/home-assistant.log will help you to spot them if any.
 
 You will need to create virtual switches.\
 I used HACS.Virtual switches but HA group Toogle also works.
