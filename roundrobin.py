@@ -58,17 +58,18 @@ TEST_MODE = False
 # Note: the first entry reprensent max number of radiator supported
 #       when no power saving mode is requested
 #       that number must be <= to the number of radiator declated in RADIATOR_LIST
-# max number of level is 10. 
+#       list lengh is user defined. len 10 max, last list value must be 0
 RADIATOR_MAX_ACTIVE = [5,4,2,1,0]
 
 # Power saving mode variable (a helper type input_number)
-# UGLY: To avoid importing extra modules it's defined twice with different types
+# UGLY: To avoid importing extra Python modules (inspect) it's defined twice with different types
+#       and a third time to get the old method to get the previous value.
 # the second definition is embedded in a function called by trigger
 # INPUT_POWER_SAVING_MODE_NAME is a string ('numeric_helper_name')
 # INPUT_POWER_SAVING_MODE_VALUE is an array( numeric_helper_name)
 INPUT_POWER_SAVING_MODE_NAME  ='input_number.powsersavingmode'
 def input_power_saving_value():
-    INPUT_POWER_SAVING_MODE_VALUE = input_number.powsersavingmode
+    INPUT_POWER_SAVING_MODE_VALUE = int(input_number.powsersavingmode[0])
     return (INPUT_POWER_SAVING_MODE_VALUE)
 
 # Away status defined by a virtual toggle
@@ -84,6 +85,12 @@ def away_status():
 #   Note: if your radiator control is done via electromagnetic relays
 #         don't switch them to often to limit rapid wear (and noise)
 TIME_STEP = 'cron(*/2 * * * *)'
+
+# IF the script controlling the power_saving_mode provides a smoothing going down
+# as does powersavingmode.py this should set to 'True'
+# When set to 'False' power_saving_mode going down will not be done via trigger but
+# by roundrobin step
+EXTERNAL_SMOOTHING=True
 
 #
 # Radiator list by name
@@ -159,10 +166,11 @@ def request_heater_change_mode(var_name, value):
     roundrobin_step()
 
 @state_trigger(INPUT_POWER_SAVING_MODE_NAME)
-def request_change_power_saving_mode():
-    # input_number are returned as list
-    log.info(f"roundrobin.py: Power Saving Mode change request->{input_power_saving_value()} -> {input_power_saving_value()[0]}")
-    roundrobin_step()              
+def request_change_power_saving_mode(value, old_value):
+    if (int(value[0]) > int(old_value[0])) or EXTERNAL_SMOOTHING:
+        log.info(f"roundrobin.py: Power Saving Mode increasing - change request->{old_value[0]} -> {value[0]}")
+        roundrobin_step()
+    # if EXTERNAL_SMOOTHING==False decreasing power saving mode will be procesed via time_trigger on a cron step to reduce relay wearing out.           
  
 @time_trigger(TIME_STEP)
 def request_roundrobinstep():
@@ -203,7 +211,7 @@ def roundrobin_step():
     log.debug(f"roundrobin.py:     radiator_requested_mode = {radiator_requested_mode}")
     log.debug(f"roundrobin.py:     radiator_live_mode      = {radiator_live_mode}")
     # get latest power saving mode
-    power_saving_mode=int(input_power_saving_value()[0])
+    power_saving_mode=input_power_saving_value()
     get_radiator_status()
     round_robin_index = int(pyscript.radiator_status.round_robin_index)
     heater_activation_count=0

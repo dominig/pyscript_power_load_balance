@@ -60,7 +60,9 @@ Most of electric radiator have an embedded thermostat. That later is often not v
 
 ## ----- Behaviour -----------
 As home hardware is not a reliable and as quick as industrial products, you need to add some delays.\
-Some are commented out waiting to be activated.
+Some are commented out waiting to be activated.\
+When several virtual switches are going on or off at a short interval, some can/will be ignored until the next roudrbin step.
+It's a normal side effet of running the trigger task as unique to protect relay controlling middleware from crashes.
 
 ### Power saving mode change
 The trigger is (and must be) instant but real corrective actions may still take a bit of time.\
