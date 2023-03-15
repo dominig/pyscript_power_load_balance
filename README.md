@@ -96,9 +96,7 @@ If you have can only use Watts meetering, take a 10% safety margin in your estim
 Different methods can be used to estimate the available power, depending how many meeters you have and where they are:
   - heating_available_A = max_available_A - other_use_A\
     most accurate method as independant from embedded radiator thermostats side effet
-  - heating_available_A =max_available_A - (global_meter_A+heating_use_w*thermostat_factor)\
-    result varies depending of embedded thermostat behaviour, hence a thermostat (start with 2 or 3)
-  - heating_available_A = max_available_A - global_meter_A + radiator_power_A*active_radiators_number/thermostat_factor\
+  - heating_available_A = max_available_A - global_meter_A + single_radiator_power_A\*active_radiators_number\/thermostat_factor\
     active_radiators_number is reported by roundrobin.py in the state variable pyscript.radiator_status as an attribute.\
 Depending of electric provider trip you may have 1 may be 2 seconds to react before blacking out.\
 As most radiator still have an internal thermostat, your measurements might be different than your calculations. Hence a thermostat_factor.\
