@@ -4,6 +4,9 @@ The simple idea is to activate and deactivate radiators automatically\
 Keeping the heating in all the house but not all at the time.\
 The number of activate radiators is defined dynamicaly.
 
+A demo video can be viewed here:\
+ https://vimeo.com/dominig/homeassistant-power-load-balancing \
+
 Configuration is simple but done directly in the code. There is NO UI.\
 You will need to install pyscript before using it\
   https://hacs-pyscript.readthedocs.io/en/latest/reference.html#state-variable-functions
