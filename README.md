@@ -91,28 +91,7 @@ The 2 old calls are still commented out in the script source code would you need
 I use as little time delay that I can. It's a compromise to find between your hardware performance\
 and the need to reduce power quickly enough to avoid a blackout when power saving mode changes.
 
-## Power Saving Mode management
-This is not covered by the script. An example based on a unique general meeter is given in the config directory.\
-It's not the best method and as soon as I will get more meeters, I will change it.\
-It can work (and does in my home) but power allocated to the heating system is always limited.\
-The issue is that, when you heat, you consume energy, and that is normal.\
-If you need to heat with all radiators on, you do not want to reduce power if that is not required.\
-The really useful info to measure, is the consummed energy outside of your heating system.\
-Your power saving mode must be driven by what remains available for the heating in Watts or better Amps.\
-The trip will cut with an Amp value, not Watts. The later varies a little with voltage changes during the day.\
-If you have can only use Watts meetering, take a 10% safety margin in your estimation.
-Different methods can be used to estimate the available power, depending how many meeters you have and where they are:
-  - heating_available_A = max_available_A - other_use_A\
-    most accurate method as independant from embedded radiator thermostats side effet
-  - heating_available_A = max_available_A - global_meter_A + single_radiator_power_A\*active_radiators_number\/thermostat_factor\
-    active_radiators_number is reported by roundrobin.py in the state variable pyscript.radiator_status as an attribute.\
-Depending of electric provider trip you may have 1 may be 2 seconds to react before blacking out.\
-As most radiator still have an internal thermostat, your measurements might be different than your calculations. Hence a thermostat_factor.\
-You still need to assume the worse case, or a blackout will most likely happen rather soon than later.\
-**Note:** Do not fully trust announced power on radiator documentation. Take it as an indication. Often they can take up to 15 to 20% more than indicated. This is particularly true in Europe where the voltage is assummed to be 220V but is often closer to 240V.
-Nothin is better than a measurement with a Clamp-on Amp Meeter.
-
-## Single phase and 3phases wiring support
+### Single phase and 3phases wiring support
 My script has been written for a single phase installation.\
 In a multiphases installation, you would need to run 3 independant scripts. One per phase\
 Just copy, change the file name, configure one script per phase.\
@@ -120,17 +99,36 @@ Just copy, change the file name, configure one script per phase.\
 
 # ---------- DESCRIPTION powersavemode.py ----------------
 
- This program estimates the remaining available power to be used by the heating system.
+ This program estimates the remaining available power that can be used by the heating system.
  
  It monitors
     - The various meeter available in the house\
       GENERAL_METER  define the unique overall installation meeter\
-      EXTRA_METERS   list the meeter attached to large non heater item\
- It controls a power_saving_mode\
+      EXTRA_METERS   Optional list of meeter attached to large non heater item\
+                     covering all the non heating consumtion.
+ It controls a power_saving_mode variable\
     The power_saving_mode is a HA numeric variable that is monitored as entry\
     by load power balancing script roundrobin.py  \
  Caculation can be done with Ampere (A) or Watts (W) or kW\
- You just need to be consistant and always used the same unit.\
+ You just need to be consistant and always used the same unit.
+
+ ## Power Saving Mode management
+Different methods can be used to estimate the available power, depending how many meters you have and where they are:
+  - Individual mode 'I'.\
+    heating_available_A = max_available_A - non_heating_use_A\
+    most accurate method as independant from embedded radiator thermostats side effet
+
+  - Global mode 'G'\
+    heating_available_A = max_available_A - global_meter_A + single_radiator_power_A\*active_radiators_number\/thermostat_factor\
+    Requires only 1 global meter and works fine enough in most cases.
+
+State variables are reported by roundrobin.py and powersavingmode.py in the state variables pyscript.roundrobin.py and pyscript.powersavingmode.py\
+
+Depending of electric provider trip you may have up to 1 may be 2 seconds to react before blacking out.\
+As most radiators are equipped with an internal thermostat, your measurements might be different than your calculations. Hence a thermostat_factor.\
+You still need to assume the worse case, or a blackout will most likely happen rather soon than later.\
+**Note:** Announced power on radiator documentation should not be fully trusted. Take it as an indication. Often they can take up to 15 to 20% more than indicated. This is particularly true in Europe where the voltage is assummed to be 220V but is often closer to 240V.
+Nothing is better than a measurement with a Clamp-on Amp Meeter.
 
 # -------------- LICENSE ---------------
 Apache V2   http://www.apache.org/licenses/

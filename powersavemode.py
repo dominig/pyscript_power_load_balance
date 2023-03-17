@@ -2,6 +2,10 @@
 #
 # This program estimates the remaining available power to be used by the heating system.
 # 
+# Two algorithm modes are available G or I
+#    General:    based on overall house energy consumtion
+#    Individual: based on non heating energy consumtion
+#
 # It monitors 
 #    - The various meeter available in the house
 #      GENERAL_METER  define the unique overall installation meeter
@@ -26,6 +30,11 @@
 # All CONSTANT must be declared in respect of Python3 syntax.
 #              Errors will only be reported in home-assistant.log
 
+#---------- Energy unit ---------
+# The code algorithm does not change whatever is your reference unit (A/W/kW your call)
+# but it must be the same for all values
+# For info my config work with A, hence the default value in the code
+
 # TEST_MODE = True the actual control the radiator is deactivated
 # but reports and log remains as normal
 # for normal operation TEST_MODE = False
@@ -36,20 +45,6 @@ TEST_MODE = False
 # Number of possible mode must be the same in HA, roundrobin.py and here.
 POWER_SAVING_MODE='input_number.powsersavingmode'
 
-# Estimated max energy consumtion per radiator (A/W/kW your call) my config work with A
-POWER_PER_RADIATOR=5
-
-# Due to embedded thermostat we cannot know if a radiator draw power when it's 'on'
-# We can only guess a factor to cover that risk
-# Higher accuracy requires higher target temperature on the embbeded thermostat
-# Schedule starting many radiator change at the same time will reduce accuracy
-SAFE_RATIO=2
-
-# This code is triggered each time that the house power consumsion changes which means often
-# HYSTERIS_FACTOR is design to smooth down the decrease of power_saving_mode
-# while leaving a fast reaction when power_saving_mode needs to be increased.
-HYSTERESIS_FACTOR=1.2
-
 # Time in second before we accept to decrease the power_saving_mode.
 # If this time is too short, the power saving mode goes down quicker than the radiators
 # are switched on and will always reach 0 to then go up again.
@@ -59,20 +54,53 @@ DAMPING_DELAY=90
 # Maximum availaible power in the house (same unit as  POWER_PER_RADIATOR)
 MAX_AVAILABLE_HOUSE_POWER=30
 
+# Select the type of algorith used fo rthe estimation
+# ESTIMATION_MODE='G' The remaining power available for heating is estimated using
+#                     the number of active radiator
+#                     That mode only required 1 meter (GENERAL_METER)
+# ESTIMATION_MODE='I' The remaining power available for heating is estimated using
+#                     the actual power used by not heating equipement
+#                     It requires additional meter(s) (a list of list)
+#                        NON_HEATING_METERS (house non heating energy use)
+ESTIMATION_MODE='G'
+
+# Estimated max energy consumtion per radiator 
+POWER_PER_RADIATOR=5
+
 # Entity measuring the over power used by the house  (same unit as  POWER_PER_RADIATOR)
 # you can use a template to report the meter reading in the right unit.
 # The second paramater is a conversion ratio to get all reading on the same unit.
-GENERAL_METER=('sensor.enedis_amp',1)
+# e.g. is reading is mA using 1000  would convert it in A
+#                    kW       0.001 would convert it in W
+# Format ('meter_entity','attribute', unit_convertion_ratio)
+# if 'attribute' is empty data is read from entity status
+GENERAL_METER=('sensor.enedis_amp','',1)
 
-# list of meters placed on energy hungry non heating equipement (e.g. washing machine)
+# This code is triggered each time that the house power consumsion changes which means often
+# HYSTERIS_FACTOR is design to smooth down the decrease of power_saving_mode
+# while leaving a fast reaction when power_saving_mode needs to be increased.
+HYSTERESIS_FACTOR=1.2
+
+# Due to embedded thermostat we cannot know if a radiator draw power when it's 'on'
+# We can only guess a factor to cover that risk
+# Higher accuracy requires higher target temperature on the embbeded thermostat
+# Schedule starting many radiator change at the same time will reduce accuracy
+SAFE_RATIO=1.3
+
+
+#------- required for ESTIMATION_MODE == 'I' ----------
+# list of list of on or several meter(s) reading all significant non heating equipement
+# Note: MUST remain a list of list even with only one meter defined
 # The first parameter is the name of entity provinding the meter reading
-# The second is a conversion ratio to get all reading on the same unit. 
-EXTRA_METERS=(('sensor.washing_machine_rms_current',1000), ('sensor.dish_washer_rms_current',1000))
+# The second is a conversion ratio to get all reading on the same unit.
+# The reading value must be in the variable state and it expected to be a string representing a float.
+# Would the reading be in an attribute a template should created externally.
+# Format (('meter_entity', 'attribute', unit_convertion_ratio),(...))
+# if 'attribute' is empty data is read from entity status
+NON_HEATING_METERS=(('sensor.washing_machine_rms_current','',1000), ('sensor.dish_washer_rms_current','',1000))
 
-# Step Round Robin every xx in cron format
-#   e.g. every second      -> TIME_STEP = 'cron(* * * * *)'
-#   Note: It must be fast enough to not blackout
-TIME_STEP = 'cron(* * * * *)'
+# Security margin to cover energy requirement not measured by EXTRA_METERS
+SECURITY_MARGIN=3
 
 #---------- IMPORT ----------
 import time
@@ -97,29 +125,44 @@ state.set(
             'time_last_decrease': int(time.time())
         })
 
+# extracting meter data
+def read_data(sensor):
+    reading=float(0)
+    if sensor[1] == '':
+        # data is directlty in state variable status
+        reading=float(state.get(sensor[0]))
+    else:
+       # data is in an attribute
+       reading=float(state.getattr(sensor[0],sensor[1]))
+    return(reading/sensor[2])
+
+# Adding all sensors reading only needed when ESTIMATION=='I'
+def add_data(meters_list):
+    data=float(0)
+    for i in meters_list:
+        data=data+read_data(i)
+    return(data)
+
 
 #--------- TRIGGER --------------
 #
 # Trigger each time general meeter value changes
-@state_trigger(GENERAL_METER[0])
+@state_trigger(GENERAL_METER[0]+GENERAL_METER[1])
 def power_meter_new_reading (value):
     # new trigger arrive before end of processing the previous one, the ignore previous value 
     task.unique("power meeter_changed_value", kill_me=False)
     log.info(f"powersavingmode.py: General power meter new_value={value}")
-    estimate_power_saving_mode(float(value))
+    estimate_power_saving_mode()
 
 # Estimation of a new per saving mode
-def estimate_power_saving_mode(general_meter_reading):
-    # TODO Summing all available large metered equipement (if any)
-    # extra_total_power=0
-    # for i in range(len(EXTRA_METERS)):
-    #     # reading meeter and applying ratio correction to unify units
-    #     log.debug(f"powersavingmode.py: reading extra meter -> {EXTRA_METERS[i]} ")
-    #     extra_total_power=extra_total_power+float(eval(EXTRA_METERS[i][0]))/EXTRA_METERS[i][1]
-    # estimating the remaining available heating power
-    heating_remaining_power=MAX_AVAILABLE_HOUSE_POWER-general_meter_reading+ACTIVE_RADIATORS.count('1')*POWER_PER_RADIATOR/SAFE_RATIO
+def estimate_power_saving_mode():
+    if ESTIMATION_MODE=='G':
+        heating_remaining_power=MAX_AVAILABLE_HOUSE_POWER-read_data(GENERAL_METER)+ACTIVE_RADIATORS.count('1')*POWER_PER_RADIATOR/SAFE_RATIO
+    else:
+        heating_remaining_power=MAX_AVAILABLE_HOUSE_POWER-add_data(NON_HEATING_METERS)-SECURITY_MARGIN
     log.debug(f"powersavingmode.py: estimated available power={heating_remaining_power:2.2f}")
     state.setattr('pyscript.powerstate_status.heating_remaining_power',heating_remaining_power)
+
     # power_saving_mode=0 indicates max power available for the heating system.
     # when available power is reducing, we need to be quick to increase the saving_power_mode
     if heating_remaining_power < POWER_PER_RADIATOR*SAFE_RATIO and not TEST_MODE:
@@ -135,4 +178,4 @@ def estimate_power_saving_mode(general_meter_reading):
     
     # debug only    
     log.debug(f"powersavingmode.py: saving_power_mode        ={state.get(POWER_SAVING_MODE)}")
-    log.debug(f"powersavingmode.py: general_meter_reading    ={general_meter_reading:2.2f}")
+    log.debug(f"powersavingmode.py: general_meter_reading    ={read_data(GENERAL_METER):2.2f}")
