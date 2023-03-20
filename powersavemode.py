@@ -105,14 +105,6 @@ SECURITY_MARGIN=3
 #---------- IMPORT ----------
 import time
 
-#--------- IMPORTED DATA --------
-# Lists reported by roudrobin.py in state variables
-# Leave time to roundrobin.py to create the requered state variable on a cold boot (time in second)
-while pyscript.radiator_status.radiator_live_mode == None:
-    task.sleep(5)
-MAX_RADIATORS_ON=float(state.get('pyscript.radiator_status.power_saving_mode_steps')[0])
-ACTIVE_RADIATORS='pyscript.radiator_status.radiator_live_mode'
-
 #---------STATE VARIABLE ---------
 # data required between triggers
 # EPOC unix time in second
@@ -124,6 +116,9 @@ state.set(
             'heating_remaining_power' : 0,
             'time_last_decrease': int(time.time())
         })
+#--------- IMPORTED DATA --------
+ACTIVE_RADIATORS='pyscript.radiator_status.radiator_live_mode'
+log.info(f"powersavingmode.py: Imported data from roudrobin.py successful -> starting monitoring")
 
 # extracting meter data
 def read_data(sensor):

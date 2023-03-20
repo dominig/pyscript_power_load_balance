@@ -140,12 +140,12 @@ for i in range(len(RADIATOR_ACTUAL_SWITCH_DICT)):
 
 # warning state variables are always read as string
 # attributes can carry other types
-state.set(
+state.persist(
         'pyscript.radiator_status',
-        value='none',
-        new_attributes={
+        default_value='none',
+        default_attributes={
             'test_mode': TEST_MODE,
-            'away_status': '',
+            'away_status': 'off',
             'power_saving_mode': 0,
             'round_robin_index': 0,
             'active_radiators_number':0,
