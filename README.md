@@ -8,8 +8,8 @@ A demo video can be viewed here:\
  https://vimeo.com/dominig/homeassistant-power-load-balancing \
 
 Configuration is simple but done directly in the code. There is NO UI.\
-You will need to install pyscript before using it\
-  https://hacs-pyscript.readthedocs.io/en/latest/reference.html#state-variable-functions
+You will need to install pyscript before using it (via hacs it's the simplest)\
+  https://hacs-pyscript.readthedocs.io/en/latest/installation.html
 
 The base principle of the load balancing is that a PowerSavingMode number is set via an automation\
 You can use any input number as a target. My example uses the house actual consumed power in Watts and a numeric helper\
