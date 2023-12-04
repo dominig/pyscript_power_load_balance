@@ -249,11 +249,11 @@ def roundrobin_step():
                 log.debug(f"roundrobin.py: Switching actual radiator {RADIATOR_LIST[i]} index {i} 'off'")
                 # service call seems more stable than state.set (may depend on target hardware use one or the other)
                 #state.set(RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]], value='off')
-                service.call('light','turn_off',blocking=True, limit=1,entity_id=RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]])
+                service.call('light','turn_off',blocking=True,entity_id=RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]])
             if radiator_live_mode[i] == 1 :
                 log.debug(f"roundrobin.py: Switching actual radiator {RADIATOR_LIST[i]} index {i} 'on'")
                 #state.set(RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]], value='on')
-                service.call('light','turn_on',blocking=True, limit=1,entity_id=RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]])
+                service.call('light','turn_on',blocking=True,entity_id=RADIATOR_ACTUAL_SWITCH_DICT[RADIATOR_LIST[i]])
         
      # save new state for reuse(roundrobin_index)/info/tracking/debug
     log.info(f"roundrobin.py: End roundrobin stepping radiator_requested_mode = {radiator_requested_mode}")
